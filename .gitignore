@@ -1,0 +1,21 @@
+# Entorno virtual y Python
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+venv/
+.env/
+
+# Datasets pesados (descargables vía Roboflow Universe)
+train/
+valid/
+test/
+face emotions.v1i.yolo26/train/
+face emotions.v1i.yolo26/valid/
+face emotions.v1i.yolo26/test/
+*.cache
+*.zip
+
+# Archivos de depuración y temporales
+*.log
+.ipynb_checkpoints/

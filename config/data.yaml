@@ -1,0 +1,16 @@
+# Configuración de Dataset para Detección de Emociones Faciales (YOLO11)
+path: D:/Documentos/Trabajos upeu/Trabajos upeu/C8/IA/Renococimiento Facial/face emotions.v1i.yolo26
+train: train/images
+val: valid/images
+test: test/images
+
+# Número de Clases y Nombres
+nc: 6
+names: ['anger', 'fear', 'happy', 'neutral', 'sad', 'surprise']
+
+# Metadata Roboflow
+roboflow:
+  workspace: school-uhkye
+  project: face-emotions-deqe1
+  version: 1
+  license: CC BY 4.0
