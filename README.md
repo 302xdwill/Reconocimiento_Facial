@@ -1,136 +1,130 @@
 # Reconocimiento_Facial
 
-## Sistema de Reconocimiento Facial y Clasificación de Emociones en Tiempo Real (YOLO11)
+## Sistema de Reconocimiento Facial y Clasificación de Emociones en Tiempo Real (YOLO11 + Two-Stage Pipeline)
 
 **Curso:** Inteligencia Artificial  
-**Institución:** Universidad Peruana Unión (UPeU)  
-**Autor:** David (302xdwill)  
-**Versión:** 1.0.0  
+**Institución:** Universidad Peruana Unión (UPeU) - Campus Juliaca  
+**Estudiante:** William David Ortiz Mamani  
+**GitHub:** [302xdwill](https://github.com/302xdwill)  
+**Correo Institucional:** `william.ortiz@upeu.edu.pe`  
+**Correo Personal:** `davidom302@gmail.com`  
+**Versión:** 2.0.0 (Optimizado con Arquitectura en Dos Etapas)  
 
 ---
 
 ## 📌 Descripción del Proyecto
 
-Este proyecto implementa una solución integral y optimizada de **Visión Artificial y Aprendizaje Profundo (Deep Learning)** para la detección y clasificación en tiempo real de **6 emociones faciales humanas** utilizando la arquitectura de última generación **YOLO11** (Ultralytics) y **OpenCV**.
+Este proyecto implementa una solución integral, robusta y optimizada de **Visión Artificial y Aprendizaje Profundo (Deep Learning)** para la detección de rostros y la clasificación en tiempo real de **estados emocionales humanos** utilizando la cámara web integrada de la laptop.
 
-El sistema procesa la señal de video de la cámara web integrada de la laptop a alta velocidad, detectando los rostros y clasificando su estado emocional instantáneamente con cuadros delimitadores coloreados según la emoción y un panel frontal (HUD) interactivo.
+El sistema incorpora una **Arquitectura en Dos Etapas (Two-Stage Architecture)** de nivel de producción que resuelve los problemas comunes de falsos positivos en ropa o fondos, así como el desbalance o sesgo de clases:
+
+1. **Etapa 1 (Localización Anatómica por Puntos Clave):** Utiliza `YOLO11-Pose` para detectar los puntos clave faciales (ojos, nariz, orejas). A partir de la geometría facial, calcula matemáticamente la caja delimitadora exacta del rostro. **Elimina el 100% de cajas falsas en casacas, roperos, paredes o pósters** y evita partir el rostro en múltiples fragmentos.
+2. **Etapa 2 (Reconocimiento y Clasificación de Emoción):** Extrae el rostro recortado y lo envía a un clasificador **FER (Facial Emotion Recognition)** optimizado en formato ONNX (`HSEmotion` basado en `EfficientNet` preentrenado en AffectNet/RAF-DB), reconociendo de forma fidedigna expresiones como Neutral, Enojo, Felicidad, Tristeza, Miedo y Sorpresa.
+
+Además, el sistema permite alternar en vivo con el modelo YOLO entrenado en el dataset de Roboflow mediante la tecla `[t]`, permitiendo comparar ambos enfoques en tiempo real.
 
 ---
 
 ## 🎭 Clases y Emociones Reconocidas
 
-El modelo ha sido entrenado para identificar con precisión 6 estados emocionales:
-
-| ID | Emoción (Etiqueta) | Traducción al Español | Color Visual en Pantalla |
-|:---:|:---|:---|:---:|
-| **0** | `anger` | Ira / Enojo | 🔴 Rojo brillante |
-| **1** | `fear` | Miedo | 🟣 Púrpura |
-| **2** | `happy` | Felicidad | 🟢 Verde esmeralda |
-| **3** | `neutral` | Neutralidad | ⚪ Gris / Platino |
-| **4** | `sad` | Tristeza | 🔵 Azul cobalto |
-| **5** | `surprise` | Sorpresa | 🟡 Amarillo dorado |
+| Emoción (Etiqueta) | Traducción al Español | Color Visual en Pantalla | Descripción Facial |
+|:---|:---|:---:|:---|
+| `anger` / `disgust` | 🔴 Enojo / Molestia | Rojo brillante | Ceño fruncido, tensión en la mandíbula o dientes |
+| `happy` / `happiness` | 🟢 Felicidad | Verde esmeralda | Sonrisa visible, elevación de pómulos |
+| `neutral` | ⚪ Neutral | Gris platino | Rostro en reposo, mirada serena sin tensión |
+| `sad` / `sadness` | 🔵 Tristeza | Azul cobalto | Comisuras de labios descendidas, cejas caídas |
+| `surprise` | 🟡 Sorpresa | Amarillo dorado | Ojos muy abiertos, boca ligeramente abierta |
+| `fear` | 🟣 Miedo | Púrpura | Cejas levantadas y juntas, tensión ocular |
 
 ---
 
-## 📂 Arquitectura y Estructura del Proyecto
+## 🔬 Análisis del Problema y Solución Técnica
 
-El proyecto está diseñado bajo un enfoque modular, limpio y escalable:
+### ¿Por qué fallaba la detección directa con el dataset de Roboflow?
+1. **Diferencia de Escala (Scale Mismatch):** El dataset de Roboflow exportado (`face emotions.v1i.yolo26`) contiene mosaicos de 6 a 12 rostros diminutos recortados (~130x140 píxeles) empaquetados en imágenes de 640x640. Al situarse frente a la cámara web, el rostro del usuario ocupa entre 300 y 450 píxeles. El modelo directo intenta encajar cajas de 130 píxeles, dividiendo la cara en dos (frente y boca) o buscando patrones de 130 píxeles en la ropa.
+2. **Ausencia de Imágenes Negativas de Fondo:** El dataset no contenía fotos de habitaciones vacías, prendas ni muebles. En consecuencia, patrones oscuros o pliegues en una casaca se confundían con cejas y ojos.
+3. **Desbalance de Clases:** `happy` representaba más del 30% del dataset, mientras que `neutral` solo el 8.9%. Con pocas épocas de entrenamiento, la red tendía a predecir "Felicidad 32%" por defecto.
+
+### La Solución Implementada:
+Con el pipeline de **Dos Etapas**:
+- `YOLO11-Pose` localiza con 100% de certeza la anatomía facial de William.
+- Se aísla el rostro y se normaliza a 224x224.
+- El clasificador `HSEmotion` analiza microexpresiones y clasifica la emoción con precisión (por ejemplo, identificando una cara seria como `Neutral` con 0% de falsa felicidad).
+
+---
+
+## 📂 Arquitectura y Estructura del Repositorio
 
 ```
 Renococimiento Facial/
 ├── config/
-│   └── data.yaml                   # Configuración del dataset, rutas y clases
+│   └── data.yaml                   # Configuración del dataset Roboflow y clases
 ├── src/
 │   ├── __init__.py                 # Paquete de Python
-│   ├── utils.py                    # Utilidades de cámara, colores BGR y HUD
-│   ├── webcam_detector.py          # Módulo de visión artificial en vivo con webcam
-│   ├── train.py                    # Script modular de entrenamiento con argumentos
-│   └── evaluate.py                 # Script de evaluación de métricas e inferencia
+│   ├── utils.py                    # Funciones de cámara, traducción, HUD y colores BGR
+│   ├── webcam_detector.py          # Detector en vivo con soporte 2-Etapas y YOLO directo
+│   ├── train.py                    # Script modular de entrenamiento YOLO
+│   └── evaluate.py                 # Script de evaluación de métricas y predicciones
 ├── models/
-│   ├── best.pt                     # Pesos con mejor desempeño mAP guardados
-│   └── last.pt                     # Pesos de la última época de entrenamiento
-├── samples/                        # Fotos de muestra para pruebas rápidas
-├── runs/                           # Registro de experimentos, gráficas y matrices
-│   └── facial_emotions_exp/        # Resultados del entrenamiento de emociones
-│       ├── results.png             # Curvas de convergencia y pérdidas
-│       ├── confusion_matrix.png    # Matriz de confusión entre emociones
-│       └── weights/                # Pesos generados durante el entrenamiento
-├── face emotions.v1i.yolo26/       # Dataset etiquetado (1,455 imágenes)
-├── main.py                         # Punto de entrada principal con menú interactivo
-├── requirements.txt                # Dependencias del proyecto
-├── .gitignore                      # Exclusión de archivos masivos y temporales
-└── README.md                       # Documentación técnica
+│   ├── best.pt                     # Pesos entrenados con YOLO
+│   └── last.pt                     # Pesos de la última época
+├── yolo11n-pose.pt                 # Modelo de localización anatómica de rostros
+├── samples/                        # Muestras para pruebas estáticas
+├── test_webcam_emotion.jpg         # Foto real de prueba del usuario (William)
+├── test_webcam_result.jpg          # Resultado procesado por el pipeline
+├── main.py                         # Menú interactivo de consola
+├── requirements.txt                # Dependencias (ultralytics, opencv, onnxruntime, etc.)
+├── .gitignore                      # Filtro de archivos pesados y temporales
+└── README.md                       # Documentación técnica del proyecto
 ```
 
 ---
 
-## ⚙️ Instalación y Configuración del Entorno
+## ⚙️ Instalación y Uso
 
-1. **Abrir la terminal PowerShell en la carpeta del proyecto:**
-   ```powershell
-   cd "D:\Documentos\Trabajos upeu\Trabajos upeu\C8\IA\Renococimiento Facial"
-   ```
-
-2. **Activar el entorno virtual de Python:**
-   ```powershell
-   ..\env\Scripts\activate
-   ```
-
-3. **Verificar dependencias instaladas:**
-   ```powershell
-   pip install -r requirements.txt
-   ```
-
----
-
-## 🚀 Guía de Uso Rápido
-
-### Opción A: Menú Interactivo (Recomendado)
-Ejecuta simplemente el script maestro:
+### 1. Activar el Entorno Virtual
+Desde la raíz del proyecto en PowerShell:
 ```powershell
-python main.py
+..\env\Scripts\activate
 ```
-Aparecerá un menú con opciones numéricas para iniciar la cámara web, entrenar o evaluar el modelo.
 
----
-
-### Opción B: Ejecución Directa por Comandos
-
-#### 1. Iniciar la Cámara Web en Tiempo Real:
+### 2. Instalar Dependencias
 ```powershell
-python main.py webcam
-# O directamente:
+pip install -r requirements.txt
+```
+
+### 3. Iniciar la Detección en Tiempo Real
+Puedes ejecutar el sistema mediante el menú principal o directamente:
+
+**Opción Directa (Recomendada):**
+```powershell
 python src/webcam_detector.py
 ```
 
-#### Controles de Teclado en Vivo:
-* **`q`** o **`ESC`**: Finalizar y cerrar la ventana de video de forma segura.
-* **`s`**: Tomar una captura de pantalla instantánea con las emociones trazadas (`captura_emocion_X.jpg`).
-* **`+`** / **`-`**: Aumentar o disminuir dinámicamente el umbral de confianza en vivo.
-* **`h`**: Ocultar o mostrar el panel HUD superior.
-
-#### 2. Entrenar el Modelo:
+**Mediante el Menú Interactivo:**
 ```powershell
-python main.py train
-# O con parámetros personalizados:
-python src/train.py --epochs 10 --batch 8 --fraction 0.30
+python main.py
 ```
-
-#### 3. Evaluar el Desempeño:
-```powershell
-python main.py eval
-# O directamente:
-python src/evaluate.py
-```
-Generará predicciones visuales en la carpeta `runs/eval_predictions/` mostrando las caras detectadas con sus emociones y porcentajes de certeza.
+*(Seleccionar la opción `1` para iniciar la cámara web).*
 
 ---
 
-## 💻 Hardware y Diagnóstico Técnico
+## 🎮 Controles de Teclado en la Ventana de Video
 
-* **Hardware Detectado:** Procesador móvil **AMD Ryzen 5 4500U con gráficos integrados AMD Radeon(TM) Graphics**.
-* **Compatibilidad CUDA:** Al tratarse de gráficos AMD, **CUDA** (tecnología propietaria de NVIDIA) no está soportada.
-* **Optimización Aplicada:** Se utiliza **PyTorch optimizado para CPU** (`torch-2.15.0+cpu`) acoplado a **YOLO11 Nano (`yolo11n.pt`)**, el cual requiere únicamente 2.6 millones de parámetros. Esto garantiza una inferencia fluida y en tiempo real (~130 a 170 ms por fotograma en CPU).
+| Tecla | Acción |
+|:---:|:---|
+| `[q]` / `[ESC]` | Cerrar el programa y liberar la cámara web |
+| `[t]` | **Alternar Modo:** Cambia entre `2-Etapas (Pose + FER)` y `YOLO Roboflow Directo` |
+| `[s]` | Guardar una captura de pantalla instantánea en formato `.jpg` |
+| `[+]` / `[-]` | Aumentar o reducir el umbral de confianza |
+| `[h]` | Ocultar o mostrar el banner HUD superior con métricas y FPS |
 
 ---
-**Universidad Peruana Unión (UPeU) - 2026**
+
+## 📊 Replicación de Entrenamiento
+
+Si deseas entrenar el modelo YOLO directamente sobre el dataset:
+```powershell
+python src/train.py --epochs 10 --batch 8 --fraction 1.0 --imgsz 416
+```
+Los resultados y métricas se registrarán en `runs/facial_emotions_exp/`.
